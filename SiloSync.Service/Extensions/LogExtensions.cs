@@ -26,9 +26,10 @@ public static class LogExtensions
                 customLogger
                     .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
                     .WriteTo.Logger(lc => lc
-                        .Filter.ByIncludingOnly(evt => evt.Level == Serilog.Events.LogEventLevel.Warning)
+                        .Filter.ByIncludingOnly(evt => evt.Level >= Serilog.Events.LogEventLevel.Warning)
                         .WriteTo.File($"{AppDomain.CurrentDomain.BaseDirectory}/Logs/Exceptions/Log-{PersianCalendarTools.GregorianToPersianWithManualSeprator(DateTime.Now, "")}.log"
                         , outputTemplate: @"-------------------Exception Begin----------------------
+                                {NewLine}Level:{Level:u3}
                                 {NewLine}Exception Occure Time:{Timestamp:o}
                                 {NewLine}Exception Message:{Message}
                                 {NewLine}Exception Base:{Exception}
@@ -37,6 +38,7 @@ public static class LogExtensions
                         .Filter.ByIncludingOnly(evt => evt.Level <= Serilog.Events.LogEventLevel.Information)
                         .WriteTo.File($"{AppDomain.CurrentDomain.BaseDirectory}/Logs/InfoLogs/Log-{PersianCalendarTools.GregorianToPersianWithManualSeprator(DateTime.Now, "")}.log"
                         , outputTemplate: @"-------------------Log Begin----------------------
+                                {NewLine}Level:{Level:u3}
                                 {NewLine}Occure Time:{Timestamp:o}
                                 {NewLine}Message:{Message}
                                 {NewLine}-------------------Log End----------------------{NewLine}"));

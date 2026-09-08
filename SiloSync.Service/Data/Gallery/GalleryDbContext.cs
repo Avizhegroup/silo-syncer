@@ -16,7 +16,9 @@ public sealed class GalleryDbContext : DbContext
         {
             entity.ToTable("tbl_Gallery", "dbo");
             entity.HasKey(e => e.FldGalleryId);
-            entity.Property(e => e.FldGalleryId).HasColumnName("fld_GalleryId");
+            entity.Property(e => e.FldGalleryId)
+                .HasColumnName("fld_GalleryId")
+                .HasConversion(v => (int)v, v => v);
             entity.Property(e => e.FldGalleryUserId).HasColumnName("fld_GalleryUserId").HasMaxLength(128);
             entity.Property(e => e.FldGalleryMediaName).HasColumnName("fld_GalleryMediaName").HasMaxLength(128);
             entity.Property(e => e.FldGalleryMediaPath).HasColumnName("fld_GalleryMediaPath").HasMaxLength(512);
