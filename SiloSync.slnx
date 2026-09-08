@@ -15,4 +15,7 @@
   <Folder Name="/src/Shared/">
     <Project Path="SiloSync.Shared/SiloSync.Shared.csproj" />
   </Folder>
+  <Folder Name="/src/UI/">
+    <Project Path="SiloSync.UI/SiloSync.UI.csproj" Id="6dab38cd-5633-482d-ab70-828c8d2d1b44" />
+  </Folder>
 </Solution>
