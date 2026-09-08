@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Api/">
+    <Project Path="SiloSync.Api/SiloSync.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Service/">
+    <Project Path="SiloSync.Service/SiloSync.Service.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="SiloSync.Shared/SiloSync.Shared.csproj" />
+  </Folder>
+</Solution>
