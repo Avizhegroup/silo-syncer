@@ -1,0 +1,51 @@
+@inject IFilesApiClient FilesApiClient
+
+<MudStack Spacing="2" Class="mt-2">
+    <MudText Typo="Typo.subtitle2">تصاویر</MudText>
+
+    @if (_loading)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+    }
+    else if (_images.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">تصویری برای این رکورد ثبت نشده است.</MudText>
+    }
+    else
+    {
+        <div style="display:flex; flex-wrap:wrap; gap:12px;">
+            @foreach (var image in _images)
+            {
+                <a href="@image.Url" target="_blank" rel="noopener" title="@image.FileName">
+                    <img src="@image.Url" alt="@image.FileName" loading="lazy"
+                         style="width:160px; height:120px; object-fit:cover; border-radius:8px; border:1px solid var(--mud-palette-lines-default);" />
+                </a>
+            }
+        </div>
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired]
+    public string? UsageId { get; set; }
+
+    private bool _loading = true;
+    private IReadOnlyList<FileLinkDto> _images = Array.Empty<FileLinkDto>();
+    private string? _loadedUsageId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UsageId) || UsageId == _loadedUsageId)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        _images = await FilesApiClient.GetFileLinksAsync(UsageId);
+        _loadedUsageId = UsageId;
+        _loading = false;
+    }
+}

@@ -1,7 +1,129 @@
-﻿@page "/"
+@page "/"
+@inject IVehicleTagReportApiClient VehicleTagReportApiClient
 
-<PageTitle>Home</PageTitle>
+<PageTitle>گزارش خودروها</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h5" Class="mb-4">گزارش خودروهای ثبت‌شده</MudText>
 
-Welcome to your new app.
+<MudPaper Class="pa-4 mb-4" Elevation="1">
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField T="string" Label="سریال" @bind-Value="_serialNumber"
+                          Variant="Variant.Outlined" Clearable="true"
+                          OnKeyDown="HandleFilterKeyDown" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudTextField T="string" Label="عنوان صف خودرو" @bind-Value="_queueTitle"
+                          Variant="Variant.Outlined" Clearable="true"
+                          OnKeyDown="HandleFilterKeyDown" />
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudSelect T="string" Label="مرکز پذیرش" @bind-Value="_receptionCenter"
+                       Variant="Variant.Outlined" Clearable="true">
+                @foreach (var center in _receptionCenters)
+                {
+                    <MudSelectItem T="string" Value="@center">@center</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <div style="display:flex; gap:8px; height:100%; align-items:center;">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Search"
+                           OnClick="Search">
+                    جستجو
+                </MudButton>
+                <MudButton Variant="Variant.Outlined"
+                           StartIcon="@Icons.Material.Filled.FilterAltOff"
+                           OnClick="ClearFilters">
+                    پاک کردن فیلترها
+                </MudButton>
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudDataGrid T="VehicleTagReportDto" @ref="_grid" ServerData="LoadServerDataAsync"
+             Filterable="false" SortMode="SortMode.None" Hover="true" Bordered="true"
+             Striped="true" RowsPerPage="25">
+    <Columns>
+        <HierarchyColumn T="VehicleTagReportDto" />
+        <PropertyColumn Property="x => x.SerialNumber" Title="سریال" />
+        <PropertyColumn Property="x => x.ShamsiDate" Title="تاریخ شمسی" />
+        <PropertyColumn Property="x => x.PlateNumber" Title="شماره پلاک انتظامی" />
+        <PropertyColumn Property="x => x.VehicleModelTitle" Title="عنوان مدل خودرو" />
+        <PropertyColumn Property="x => x.PlateStatus" Title="وضعیت پلاک" />
+        <PropertyColumn Property="x => x.QueueTitle" Title="عنوان صف خودرو" />
+        <PropertyColumn Property="x => x.ReceptionCenter" Title="مرکز پذیرش" />
+        <PropertyColumn Property="x => x.ReceptionUser" Title="کاربر پذیرش" />
+    </Columns>
+    <ChildRowContent>
+        <VehicleDetailPanel Record="@context.Item" />
+    </ChildRowContent>
+    <PagerContent>
+        <MudDataGridPager T="VehicleTagReportDto" />
+    </PagerContent>
+    <NoRecordsContent>
+        <MudText>رکوردی یافت نشد.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>در حال بارگذاری...</MudText>
+    </LoadingContent>
+</MudDataGrid>
+
+@code {
+    private string? _serialNumber;
+    private string? _queueTitle;
+    private string? _receptionCenter;
+    private IReadOnlyList<string> _receptionCenters = Array.Empty<string>();
+    private MudDataGrid<VehicleTagReportDto>? _grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _receptionCenters = await VehicleTagReportApiClient.GetReceptionCentersAsync();
+    }
+
+    private async Task<GridData<VehicleTagReportDto>> LoadServerDataAsync(GridState<VehicleTagReportDto> state, CancellationToken cancellationToken)
+    {
+        var query = new VehicleTagReportQuery
+        {
+            SerialNumber = _serialNumber,
+            QueueTitle = _queueTitle,
+            ReceptionCenter = _receptionCenter,
+            PageNumber = state.Page + 1,
+            PageSize = state.PageSize
+        };
+
+        var result = await VehicleTagReportApiClient.SearchAsync(query);
+
+        return new GridData<VehicleTagReportDto>
+        {
+            Items = result.Items,
+            TotalItems = result.TotalCount
+        };
+    }
+
+    private async Task Search()
+    {
+        if (_grid is not null)
+        {
+            await _grid.ReloadServerData();
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        _serialNumber = null;
+        _queueTitle = null;
+        _receptionCenter = null;
+        await Search();
+    }
+
+    private async Task HandleFilterKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Search();
+        }
+    }
+}

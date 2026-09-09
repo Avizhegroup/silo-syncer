@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using SiloSync.Api.Data.VehicleTagReport;
 using SiloSync.Api.Extensions;
 using SiloSync.Api.Options;
 using SiloSync.Api.Services;
@@ -17,6 +19,26 @@ builder.Services.AddOptions<FileStorageOptions>()
     .ValidateOnStart();
 
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
+
+builder.Services.AddOptions<VehicleTagReportOptions>()
+    .Bind(builder.Configuration.GetSection(VehicleTagReportOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+var vehicleTagReportOptions = builder.Configuration
+    .GetSection(VehicleTagReportOptions.SectionName)
+    .Get<VehicleTagReportOptions>() ?? new VehicleTagReportOptions();
+
+// Separate, read-only SQL Server connection — never written to by the Api.
+builder.Services.AddDbContext<VehicleTagReportDbContext>(dbBuilder =>
+{
+    dbBuilder.UseSqlServer(vehicleTagReportOptions.ConnectionString, sql =>
+    {
+        sql.CommandTimeout(60);
+    });
+});
+
+builder.Services.AddScoped<IVehicleTagReportService, VehicleTagReportService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

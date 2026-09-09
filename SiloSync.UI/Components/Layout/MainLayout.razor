@@ -1,9 +1,27 @@
 ﻿@inherits LayoutComponentBase
 
-@Body
+<MudRTLProvider RightToLeft="true">
+    <MudThemeProvider Theme="_theme" />
+    <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudText Typo="Typo.h6">سیلوسینک &mdash; گزارش خودروها</MudText>
+        </MudAppBar>
+        <MudMainContent Class="pa-2 pa-sm-4">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+</MudRTLProvider>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    خطایی رخ داده است.
+    <a href="." class="reload">بارگذاری مجدد</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private readonly MudTheme _theme = new();
+}

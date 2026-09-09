@@ -9,9 +9,10 @@ central File Storage API, tracking progress locally so nothing is sent twice.
 
 ```
 SiloSync.slnx
-├─ src/Api      → SiloSync.Api      (ASP.NET Core Web API — file storage host)
-├─ src/Service  → SiloSync.Service  (Windows Service — polls SQL Server, uploads files)
-└─ src/Shared   → SiloSync.Shared   (shared DTOs/contracts referenced by both)
+├─ SiloSync.Api      (ASP.NET Core Web API — file storage host + read-only report endpoints)
+├─ SiloSync.Service  (Windows Service — polls SQL Server, uploads files)
+├─ SiloSync.Shared   (shared DTOs/contracts referenced by all three)
+└─ SiloSync.UI       (Blazor Server — MudBlazor, RTL, browses/filters report data)
 ```
 
 - **Target framework:** .NET 9 for all projects.
@@ -100,13 +101,83 @@ Bare ASP.NET Core Controllers host with OpenAPI.
 - `Program.cs` configures larger multipart/Kestrel request body size limits
   for uploads and ensures the storage root directory exists at startup.
 
+### VehicleTagReport (read-only reporting)
+
+A second, **independent SQL Server connection** used only for reporting —
+never written to, and never assume it's the same database/server as
+anything `SiloSync.Service` talks to.
+
+- `Options\VehicleTagReportOptions.cs` — `VehicleTagReport:ConnectionString`
+  config section.
+- `Data\VehicleTagReport\` — `VehicleTagReportEntity` +
+  `VehicleTagReportDbContext`, mapped via Fluent API (`OnModelCreating`) to
+  `[dbo].[VehicleTagReport]`. The table's columns are **Persian
+  identifiers** (e.g. `سریال`, `عنوان صف خودرو`, `مرکز پذیرش`); the entity
+  exposes English property names and each `HasColumnName(...)` call maps to
+  the real column. Always query with `AsNoTracking()`.
+- `Services\IVehicleTagReportService` / `VehicleTagReportService` — filters
+  by partial `SerialNumber`/`QueueTitle` (`Contains`) and exact
+  `ReceptionCenter`, pages server-side, and exposes distinct
+  `ReceptionCenter` values for filter dropdowns. Materialize entities with
+  `ToListAsync()` before mapping to `VehicleTagReportDto` — EF Core cannot
+  translate a static mapping method inside `.Select(...)`.
+- `Controllers\VehicleTagReportController.cs`:
+  - `GET /api/vehicletagreport?serialNumber=&queueTitle=&receptionCenter=&pageNumber=&pageSize=`
+    → `PagedResult<VehicleTagReportDto>`.
+  - `GET /api/vehicletagreport/reception-centers` → `string[]`.
+- `سریال` doubles as the file-storage `usageId` — the UI fetches a record's
+  images by calling the existing `GET /api/files/{usageId}` with
+  `SerialNumber`, not through this controller.
+
 ## SiloSync.Shared
 
 Currently holds the shared contracts used by both API and Service:
 `UploadFileRequest`, `UploadFileResponse`, `FileLinkDto` (usageId, media
 name, usage type, extension type, upload datetime, additional data,
-returned URLs). Put any new cross-project DTO here rather than duplicating
-it in `Api` or `Service`.
+returned URLs); and the reporting contracts `VehicleTagReportDto`,
+`VehicleTagReportQuery`, `PagedResult<T>` (used by `SiloSync.Api` and
+`SiloSync.UI`). Put any new cross-project DTO here rather than duplicating
+it in `Api`, `Service`, or `UI`.
+
+## SiloSync.UI
+
+Blazor Server app (`InteractiveServer` render mode) — the operator-facing
+front end. RTL/Persian by design; do not add LTR-only assumptions.
+
+- References `SiloSync.Shared` (for the DTOs) and calls `SiloSync.Api` over
+  HTTP via **typed `HttpClient`s** registered in `Program.cs` — never call
+  `IConfiguration`/raw `HttpClient` from a component. Because this is
+  Blazor **Server**, all `IVehicleTagReportApiClient`/`IFilesApiClient`
+  calls happen on the server; no CORS configuration is needed on the Api
+  for them. `<img>` tags pointing at `GET /api/files/{usageId}/{fileName}`
+  *do* hit the Api directly from the browser — keep `FileStorage:PublicBaseUrl`
+  on the Api reachable from wherever the UI is opened.
+- `Options\ApiOptions.cs` — `Api:BaseUrl` config section (base address of
+  `SiloSync.Api`).
+- `ApiClients\` — `IVehicleTagReportApiClient`/`VehicleTagReportApiClient`
+  (search + reception-center lookup) and `IFilesApiClient`/`FilesApiClient`
+  (per-usageId file links, reusing the Api's existing `FilesController`).
+  Both fail soft (log + return an empty result) rather than throwing, so a
+  down Api degrades the grid instead of crashing the page.
+- `Components\Pages\Home.razor` — the main report page: three filters
+  (سریال text, عنوان صف خودرو text, مرکز پذیرش dropdown sourced from the
+  Api) above a `MudDataGrid` using `ServerData` for server-side paging.
+  **Keep `PagerContent` with a `MudDataGridPager` present** — without it,
+  `MudDataGrid` silently re-applies its own client-side sort/filter on top
+  of the server-paged data.
+- `Components\Shared\VehicleDetailPanel.razor` /
+  `VehicleImageGallery.razor` — the grid's `HierarchyColumn` row-expansion
+  content: the remaining (non-column) fields, plus a lazily-loaded image
+  gallery keyed off `SerialNumber` as the `usageId`. Load images on expand,
+  not eagerly per row, to avoid an N+1 call per page load.
+- MudBlazor is wired globally: `Program.cs` → `AddMudServices()`;
+  `App.razor` loads `_content/MudBlazor/MudBlazor.min.css`/`.min.js` plus
+  the Vazirmatn Persian web font and sets `<html lang="fa" dir="rtl">`;
+  `MainLayout.razor` wraps everything in `<MudRTLProvider RightToLeft="true">`
+  (with `MudThemeProvider`/`MudPopoverProvider`/`MudDialogProvider`/
+  `MudSnackbarProvider` as its children, per MudBlazor's RTL requirement).
+- No authentication/authorization on this project by design (internal tool).
+- Config (`appsettings.json` → `Api` section): `Api:BaseUrl`.
 
 ## Conventions for Future Changes
 
@@ -124,7 +195,11 @@ it in `Api` or `Service`.
    intentional misspelling kept for consistency with existing code/imports.
 6. **Read-only Gallery access**: never add write operations to
    `GalleryDbContext`.
-7. Keep the plan file
+7. **Read-only VehicleTagReport access**: same rule for
+   `VehicleTagReportDbContext` in `SiloSync.Api` — it's a reporting
+   connection only, never write to it, and don't assume it shares a
+   database/server with the Gallery connection used by `SiloSync.Service`.
+8. Keep the plan file
    (`C:\Users\Software-Lead\.copilot\plans\plan-silosync-gallery-file-sync-service-file-storage-api.md`)
    in mind for context on *why* things are structured this way; the
    remaining open item is end-to-end verification (build, run API, run
