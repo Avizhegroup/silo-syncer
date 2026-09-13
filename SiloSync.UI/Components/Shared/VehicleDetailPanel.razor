@@ -2,15 +2,16 @@
     <MudGrid Spacing="3">
         @foreach (var field in DetailFields)
         {
+            string link = $"https://www.google.com/maps/search/?api=1&query={field.Value}";
             <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="display:block;">@field.Label</MudText>
-                <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(field.Value) ? "—" : field.Value)</MudText>
+                <MudLink Href="@link" 
+                         StartIcon="@Icons.Material.Filled.Map" 
+                         Target="_blank"
+                         EndIcon="@Icons.Material.Filled.OpenInNew">@field.Label</MudLink>
             </MudItem>
         }
     </MudGrid>
-
     <MudDivider Class="my-4" />
-
     <VehicleImageGallery UsageId="@Record.SerialNumber" />
 </MudPaper>
 
@@ -20,26 +21,9 @@
 
     private IEnumerable<(string Label, string? Value)> DetailFields => new (string Label, string? Value)[]
     {
-        ("شماره شاسی", Record.ChassisNumber),
-        ("شماره موتور", Record.EngineNumber),
-        ("VIN", Record.Vin),
-        ("عنوان نوع کاربری", Record.UsageTypeTitle),
-        ("عنوان سیستم خودرو", Record.VehicleSystemTitle),
-        ("تیپ خودرو", Record.VehicleType),
-        ("محور خودرو", Record.VehicleAxle),
-        ("نوع سوخت", Record.FuelType),
-        ("سال تولید", Record.ManufactureYear),
-        ("رنگ خودرو", Record.VehicleColor),
-        ("وزن خودرو", Record.VehicleWeight),
-        ("پلاکت اتاق", Record.CabinPlacard),
-        ("کاربر تأیید مدارک", Record.DocumentApprovalUser),
-        ("تاریخ تأیید مدارک", Record.DocumentApprovalDate),
         ("مختصات جغرافیایی تأیید مدارک", Record.DocumentApprovalGeoCoordinates),
-        ("راهور تأیید اول", Record.FirstTrafficPoliceApprovalUser),
-        ("تاریخ تأیید اول", Record.FirstApprovalDate),
         ("مختصات جغرافیایی تأیید راهور", Record.TrafficPoliceApprovalGeoCoordinates),
-        ("راهور تأیید پرس", Record.PressApprovalTrafficPoliceUser),
-        ("تاریخ تأیید پرس", Record.PressApprovalDate),
         ("مختصات جغرافیایی تأیید پرس", Record.PressApprovalGeoCoordinates),
+        ("مختصات جغرافیایی مرکز پذیرش", Record.ReceptionCenterLocation)
     };
 }

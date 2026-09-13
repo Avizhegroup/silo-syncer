@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SiloSync.Api.Data.VehicleTagReport;
 using SiloSync.Shared.Contracts;
 
@@ -67,6 +67,17 @@ public sealed class VehicleTagReportService : IVehicleTagReportService
             .AsNoTracking()
             .Where(r => r.ReceptionCenter != null && r.ReceptionCenter != "")
             .Select(r => r.ReceptionCenter!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<string>> GetQueueTitlesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.VehicleTagReports
+            .AsNoTracking()
+            .Where(r => r.QueueTitle != null && r.QueueTitle != "")
+            .Select(r => r.QueueTitle!)
             .Distinct()
             .OrderBy(c => c)
             .ToListAsync(cancellationToken);

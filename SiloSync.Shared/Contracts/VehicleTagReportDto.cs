@@ -1,4 +1,4 @@
-namespace SiloSync.Shared.Contracts;
+﻿namespace SiloSync.Shared.Contracts;
 
 /// <summary>
 /// Read-only projection of a row from [dbo].[VehicleTagReport].
@@ -94,4 +94,7 @@ public sealed record VehicleTagReportDto
 
     /// <summary>مرکز پذیرش</summary>
     public string? ReceptionCenter { get; init; }
+
+    /// <summary>مختصات جغرافیایی پذیرش</summary>
+    public string? ReceptionCenterLocation { get; init; }
 }

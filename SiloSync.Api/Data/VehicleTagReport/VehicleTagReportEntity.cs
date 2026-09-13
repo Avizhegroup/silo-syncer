@@ -1,4 +1,4 @@
-namespace SiloSync.Api.Data.VehicleTagReport;
+﻿namespace SiloSync.Api.Data.VehicleTagReport;
 
 /// <summary>
 /// Maps to [dbo].[VehicleTagReport]. Column names in the underlying table are in Persian;
@@ -65,4 +65,6 @@ public sealed class VehicleTagReportEntity
     public string? PressApprovalGeoCoordinates { get; set; }
 
     public string? ReceptionCenter { get; set; }
+
+    public string? ReceptionCenterLocation { get; set; }
 }

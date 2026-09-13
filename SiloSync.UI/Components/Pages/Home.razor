@@ -13,9 +13,13 @@
                           OnKeyDown="HandleFilterKeyDown" />
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
-            <MudTextField T="string" Label="عنوان صف خودرو" @bind-Value="_queueTitle"
-                          Variant="Variant.Outlined" Clearable="true"
-                          OnKeyDown="HandleFilterKeyDown" />
+            <MudSelect T="string" Label="عنوان صف خودرو" @bind-Value="_queueTitle"
+                       Variant="Variant.Outlined" Clearable="true">
+                @foreach (var title in _queueTitles)
+                {
+                    <MudSelectItem T="string" Value="@title">@title</MudSelectItem>
+                }
+            </MudSelect>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
             <MudSelect T="string" Label="مرکز پذیرش" @bind-Value="_receptionCenter"
@@ -45,7 +49,7 @@
 
 <MudDataGrid T="VehicleTagReportDto" @ref="_grid" ServerData="LoadServerDataAsync"
              Filterable="false" SortMode="SortMode.None" Hover="true" Bordered="true"
-             Striped="true" RowsPerPage="25">
+             Striped="true" RowsPerPage="10">
     <Columns>
         <HierarchyColumn T="VehicleTagReportDto" />
         <PropertyColumn Property="x => x.SerialNumber" Title="سریال" />
@@ -56,6 +60,24 @@
         <PropertyColumn Property="x => x.QueueTitle" Title="عنوان صف خودرو" />
         <PropertyColumn Property="x => x.ReceptionCenter" Title="مرکز پذیرش" />
         <PropertyColumn Property="x => x.ReceptionUser" Title="کاربر پذیرش" />
+        <PropertyColumn Property="x => x.ChassisNumber" Title="شماره شاسی" />
+        <PropertyColumn Property="x => x.EngineNumber" Title="شماره موتور" />
+        <PropertyColumn Property="x => x.Vin" Title="VIN" />
+        <PropertyColumn Property="x => x.UsageTypeTitle" Title="عنوان نوع کاربری" />
+        <PropertyColumn Property="x => x.VehicleSystemTitle" Title="عنوان سیستم خودرو" />
+        <PropertyColumn Property="x => x.VehicleType" Title="تیپ خودرو" />
+        <PropertyColumn Property="x => x.VehicleAxle" Title="محور خودرو" />
+        <PropertyColumn Property="x => x.FuelType" Title="نوع سوخت" />
+        <PropertyColumn Property="x => x.ManufactureYear" Title="سال تولید" />
+        <PropertyColumn Property="x => x.VehicleColor" Title="رنگ خودرو" />
+        <PropertyColumn Property="x => x.VehicleWeight" Title="وزن خودرو" />
+        <PropertyColumn Property="x => x.CabinPlacard" Title="پلاکت اتاق" />
+        <PropertyColumn Property="x => x.DocumentApprovalUser" Title="کاربر تأیید مدارک" />
+        <PropertyColumn Property="x => x.DocumentApprovalDate" Title="تاریخ تأیید مدارک" />
+        <PropertyColumn Property="x => x.FirstTrafficPoliceApprovalUser" Title="راهور تأیید اول" />
+        <PropertyColumn Property="x => x.FirstApprovalDate" Title="تاریخ تأیید اول" />
+        <PropertyColumn Property="x => x.PressApprovalTrafficPoliceUser" Title="راهور تأیید پرس" />
+        <PropertyColumn Property="x => x.PressApprovalDate" Title="تاریخ تأیید پرس" />
     </Columns>
     <ChildRowContent>
         <VehicleDetailPanel Record="@context.Item" />
@@ -76,11 +98,13 @@
     private string? _queueTitle;
     private string? _receptionCenter;
     private IReadOnlyList<string> _receptionCenters = Array.Empty<string>();
+    private IReadOnlyList<string> _queueTitles = Array.Empty<string>();
     private MudDataGrid<VehicleTagReportDto>? _grid;
 
     protected override async Task OnInitializedAsync()
     {
         _receptionCenters = await VehicleTagReportApiClient.GetReceptionCentersAsync();
+        _queueTitles = await VehicleTagReportApiClient.GetQueueTitlesAsync();
     }
 
     private async Task<GridData<VehicleTagReportDto>> LoadServerDataAsync(GridState<VehicleTagReportDto> state, CancellationToken cancellationToken)

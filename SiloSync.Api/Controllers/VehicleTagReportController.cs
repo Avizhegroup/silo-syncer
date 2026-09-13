@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using SiloSync.Api.Services;
 using SiloSync.Shared.Contracts;
 
@@ -46,5 +46,13 @@ public sealed class VehicleTagReportController : ControllerBase
     {
         var centers = await _reportService.GetReceptionCentersAsync(cancellationToken);
         return Ok(centers);
+    }
+
+    /// <summary>GET /api/vehicletagreport/queue-titles — distinct عنوان صف خودرو values for the filter dropdown.</summary>
+    [HttpGet("queue-titles")]
+    public async Task<ActionResult<IReadOnlyList<string>>> GetQueueTitles(CancellationToken cancellationToken)
+    {
+        var titles = await _reportService.GetQueueTitlesAsync(cancellationToken);
+        return Ok(titles);
     }
 }

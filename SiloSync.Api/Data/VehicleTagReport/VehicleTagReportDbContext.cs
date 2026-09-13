@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace SiloSync.Api.Data.VehicleTagReport;
 
@@ -51,6 +51,7 @@ public sealed class VehicleTagReportDbContext : DbContext
             entity.Property(e => e.PressApprovalDate).HasColumnName("تاریخ تأیید پرس").HasMaxLength(50);
             entity.Property(e => e.PressApprovalGeoCoordinates).HasColumnName("مختصات جغرافیایی تأیید پرس").HasMaxLength(200);
             entity.Property(e => e.ReceptionCenter).HasColumnName("مرکز پذیرش").HasMaxLength(200);
+            entity.Property(e => e.ReceptionCenterLocation).HasColumnName("مختصات جغرافیایی پذیرش").HasMaxLength(200);
 
             // Matches [UQ_VehicleTagReport_Serial] on the underlying table.
             entity.HasIndex(e => e.SerialNumber).IsUnique();

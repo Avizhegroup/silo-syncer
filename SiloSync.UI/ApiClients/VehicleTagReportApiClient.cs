@@ -1,8 +1,6 @@
-using System.Net.Http.Json;
-using SiloSync.Shared.Contracts;
+﻿using SiloSync.Shared.Contracts;
 
 namespace SiloSync.UI.ApiClients;
-
 public sealed class VehicleTagReportApiClient : IVehicleTagReportApiClient
 {
     private readonly HttpClient _httpClient;
@@ -48,6 +46,20 @@ public sealed class VehicleTagReportApiClient : IVehicleTagReportApiClient
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to fetch reception centers from the Api.");
+            return Array.Empty<string>();
+        }
+    }
+
+    public async Task<IReadOnlyList<string>> GetQueueTitlesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var titles = await _httpClient.GetFromJsonAsync<List<string>>("api/vehicletagreport/queue-titles", cancellationToken);
+            return titles ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch queue titles from the Api.");
             return Array.Empty<string>();
         }
     }
